@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/concept-loom-cover.svg" alt="Concept Loom learning workflow: Locate, Weave, Build, Check, and Save" width="100%">
+</p>
+
 # Concept Loom
 
 **A portable AI learning workflow for Codex, Claude Code, and OpenCode.**
