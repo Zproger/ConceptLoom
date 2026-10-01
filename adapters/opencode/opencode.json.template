@@ -1,0 +1,16 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "concept-loom": {
+      "type": "local",
+      "command": ["node", "__SERVER_PATH__"],
+      "enabled": true
+    }
+  },
+  "permission": {
+    "question": "allow",
+    "skill": "allow",
+    "task": "allow",
+    "concept-loom_*": "allow"
+  }
+}

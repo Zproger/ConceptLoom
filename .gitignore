@@ -1,0 +1,56 @@
+# Dependencies and generated reports
+node_modules/
+coverage/
+.nyc_output/
+dist/
+*.log
+
+# Operating systems and editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+# Secrets and machine-local configuration
+.env
+.env.*
+!.env.example
+.npmrc
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+*credentials*
+*secrets*
+.aws/
+.mcp.json
+opencode.json
+.claude/settings.local.json
+.codex/config.toml
+
+# Concept Loom learning state and generated notes
+.concept-loom/
+learning-notes*.md
+
+# Private source materials should never enter the project repository
+materials/
+books/
+courses/
+*.pdf
+*.epub
+*.mobi
+*.azw
+*.azw3
+*.mp3
+*.mp4
+*.m4a
+*.mov
+*.wav
+
+# Local installation sandboxes
+test-learning*/
+learning-workspace*/
