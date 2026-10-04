@@ -4,7 +4,7 @@
 
 # Concept Loom
 
-**A portable AI learning workflow for Codex, Claude Code, and OpenCode.**
+**A portable AI learning workflow for Codex, Claude Code, OpenCode, and DeepSeek Harness.**
 
 Version 1.0.0 · MIT licensed · Node.js 20+
 
@@ -24,7 +24,7 @@ It works with topics you explore from scratch and with your own books, courses, 
 - Expose gaps and misconceptions before building on them.
 - Check understanding with concealed-answer checkpoints.
 - Keep concise Markdown learning notes between sessions.
-- Use the same workflow in Codex, Claude Code, and OpenCode.
+- Use the same workflow in Codex, Claude Code, OpenCode, and DeepSeek Harness.
 - Show compact text or Mermaid diagrams directly in the conversation.
 
 ## Documentation
@@ -66,6 +66,7 @@ to choose the right isolation level for a small web application.
 ```bash
 node scripts/setup.mjs claude-code --target /path/to/learning-workspace
 node scripts/setup.mjs opencode --target /path/to/learning-workspace
+node scripts/setup.mjs deepseek-harness --target /path/to/learning-workspace
 ```
 
 The installer refuses to overwrite existing configuration. Merge a generated Concept Loom file manually when guidance or MCP configuration already exists.

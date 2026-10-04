@@ -1,0 +1,18 @@
+{
+  "name": "concept-loom-dsh",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "DeepSeek Harness bundle mounting Concept Loom MCP server and coaching skills.",
+  "files": [
+    "cordis.patch.yml",
+    ".dsh",
+    "AGENTS.md",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

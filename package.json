@@ -1,7 +1,7 @@
 {
   "name": "concept-loom",
   "version": "1.0.0",
-  "description": "A portable, connection-first learning companion for Codex, Claude Code, and OpenCode.",
+  "description": "A portable, connection-first learning companion for Codex, Claude Code, OpenCode, and DeepSeek Harness.",
   "type": "module",
   "private": true,
   "bin": {

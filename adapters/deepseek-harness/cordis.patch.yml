@@ -1,0 +1,20 @@
+- insert:
+    - id: concept-loom-mcp
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: concept-loom
+        transport: stdio
+        command: node
+        args:
+          - !!js "process.env.CONCEPT_LOOM_SERVER || process.getBuiltinModule('node:path').join(process.getBuiltinModule('node:path').dirname(process.getBuiltinModule('node:module').createRequire(baseUrl).resolve('concept-loom-dsh/package.json')), '..', '..', 'src', 'bridge.mjs')"
+        toolCallTimeoutMs: 60000
+        failOnStartupError: false
+
+    - id: concept-loom-skills
+      name: '@deepseek-ai/dsh-skill-filesystem'
+      config:
+        providerName: concept-loom
+        includeDefaultRoots: false
+        watch: true
+        customSkillDirs:
+          - !!js "process.getBuiltinModule('node:path').join(process.getBuiltinModule('node:path').dirname(process.getBuiltinModule('node:module').createRequire(baseUrl).resolve('concept-loom-dsh/package.json')), '.dsh', 'skills')"

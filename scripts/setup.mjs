@@ -11,10 +11,10 @@ const targetFlag = args.indexOf("--target");
 const target = resolve(targetFlag >= 0 ? args[targetFlag + 1] : process.cwd());
 const skipMcp = args.includes("--skip-mcp");
 const refresh = args.includes("--refresh");
-const allowedHosts = new Set(["codex", "claude-code", "opencode"]);
+const allowedHosts = new Set(["codex", "claude-code", "opencode", "deepseek-harness", "dsh"]);
 
 if (!allowedHosts.has(host) || (targetFlag >= 0 && !args[targetFlag + 1])) {
-  process.stderr.write("Usage: node scripts/setup.mjs <codex|claude-code|opencode> [--target PATH] [--skip-mcp] [--refresh]\n");
+  process.stderr.write("Usage: node scripts/setup.mjs <codex|claude-code|opencode|deepseek-harness|dsh> [--target PATH] [--skip-mcp] [--refresh]\n");
   process.exit(2);
 }
 
@@ -43,6 +43,7 @@ async function materializeTemplate(source, destination, replacements) {
 
 async function installReference(skillDirectory) {
   const destination = join(skillDirectory, "references", "coaching-reference.md");
+  await mkdir(dirname(destination), { recursive: true });
   await writeFile(destination, await readFile(join(projectRoot, "shared", "coaching-reference.md"), "utf8"), "utf8");
 }
 
@@ -152,11 +153,93 @@ async function installOpenCode() {
   if (guidance !== "AGENTS.md") process.stdout.write("Merge CONCEPT_LOOM_AGENTS.md into your existing AGENTS.md.\n");
 }
 
+async function registerDshMcp() {
+  if (skipMcp) {
+    process.stdout.write("Skipped global DeepSeek Harness MCP registration (--skip-mcp).\n");
+    return;
+  }
+
+  const dshHome = process.env.DSH_HOME || join(process.env.HOME || "", ".dsh");
+  const serverPath = join(projectRoot, "src", "bridge.mjs");
+  const patchPath = join(dshHome, "cordis.patch.yml");
+
+  const entry = [
+    "- insert:",
+    "    - id: concept-loom-mcp",
+    "      name: '@deepseek-ai/dsh-mcp-client'",
+    "      config:",
+    "        serverName: concept-loom",
+    "        transport: stdio",
+    "        command: node",
+    "        args:",
+    `          - ${JSON.stringify(serverPath)}`,
+    "        toolCallTimeoutMs: 60000",
+    "        failOnStartupError: false",
+    "",
+  ].join("\n");
+
+  if (!(await exists(dshHome))) {
+    await mkdir(dshHome, { recursive: true });
+  }
+
+  if (await exists(patchPath)) {
+    const content = await readFile(patchPath, "utf8");
+    if (content.includes("concept-loom-mcp")) {
+      if (content.includes(serverPath)) {
+        process.stdout.write("DeepSeek Harness MCP server 'concept-loom' is already registered with this installation.\n");
+        return;
+      }
+      if (refresh) {
+        const updated = content.replace(
+          /(id:\s*concept-loom-mcp[\s\S]*?args:\s*\n\s*-\s*)(['"][^'"]*['"]|[^\n\r]+)/,
+          `$1${JSON.stringify(serverPath)}`
+        );
+        await writeFile(patchPath, updated, "utf8");
+        process.stdout.write(`Updated DeepSeek Harness MCP server 'concept-loom' path in ${patchPath}.\n`);
+        return;
+      }
+      throw new Error(
+        "a different DeepSeek Harness MCP server named 'concept-loom' already exists in " +
+        patchPath + "; review or remove it before retrying"
+      );
+    }
+    const prefix = content.trim().length > 0 ? (content.endsWith("\n") ? "" : "\n") : "";
+    await writeFile(patchPath, content + prefix + entry, "utf8");
+    process.stdout.write(`Registered global DeepSeek Harness MCP server 'concept-loom' in ${patchPath}.\n`);
+  } else {
+    await writeFile(patchPath, entry, "utf8");
+    process.stdout.write(`Registered global DeepSeek Harness MCP server 'concept-loom' in ${patchPath}.\n`);
+  }
+}
+
+async function installDeepSeekHarness() {
+  const source = join(projectRoot, "adapters", "deepseek-harness");
+  const skillDestination = join(target, ".dsh", "skills", "concept-coach");
+  await installSkill(join(source, ".dsh", "skills", "concept-coach"), skillDestination);
+  await installReference(skillDestination);
+  if (refresh) {
+    process.stdout.write(`Refreshed DeepSeek Harness skill in ${skillDestination}\n`);
+    await registerDshMcp();
+    process.stdout.write(`\nStart a new DeepSeek Harness session from the learning workspace:\n  cd ${JSON.stringify(target)}\n  npx @deepseek-ai/dsh\n`);
+    return;
+  }
+  await copyNew(join(source, ".dsh", "agents"), join(target, ".dsh", "agents"));
+  const guidance = await installGuidance(join(source, "AGENTS.md"), "AGENTS.md", "CONCEPT_LOOM_AGENTS.md");
+  await materializeTemplate(join(source, "cordis.patch.yml.template"), join(target, ".dsh", "cordis.patch.yml"), {
+    __SERVER_PATH__: join(projectRoot, "src", "bridge.mjs"),
+  });
+  process.stdout.write(`Installed DeepSeek Harness assets in ${target}\n`);
+  if (guidance !== "AGENTS.md") process.stdout.write("Merge CONCEPT_LOOM_AGENTS.md into your existing AGENTS.md.\n");
+  await registerDshMcp();
+  process.stdout.write(`\nStart a new DeepSeek Harness session from the learning workspace:\n  cd ${JSON.stringify(target)}\n  npx @deepseek-ai/dsh\n`);
+}
+
 try {
   await mkdir(target, { recursive: true });
   if (host === "codex") await installCodex();
   if (host === "claude-code") await installClaude();
   if (host === "opencode") await installOpenCode();
+  if (host === "deepseek-harness" || host === "dsh") await installDeepSeekHarness();
 } catch (error) {
   process.stderr.write(`Setup stopped: ${error instanceof Error ? error.message : String(error)}\n`);
   process.exit(1);
