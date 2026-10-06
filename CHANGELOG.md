@@ -2,13 +2,18 @@
 
 All notable changes to Concept Loom are documented here.
 
-## Unreleased
+## 1.1.0 — 2026-10-06
 
 ### Added
 
 - DeepSeek Harness adapter with native `.dsh/skills` discovery.
 - Generated Harness MCP patch for Web and headless profiles.
 - Installer coverage for normal and `--skip-mcp` DeepSeek Harness setup.
+- Open-response checkpoints for free recall, prediction, debugging, and transfer.
+- Confidence calibration and per-concept evidence for recognition, recall, application, and transfer.
+- Guided, practice, review, and challenge session modes.
+- Delayed review scheduling and due-review discovery across sessions.
+- Explicit route extensions for prerequisites discovered during Build.
 
 ## 1.0.0 — 2026-10-01
 

@@ -45,6 +45,8 @@ Each connection follows one loop:
 
 Important ideas should also be explained freely or applied in a new situation. Selecting the right option once is not proof of mastery.
 
+Build can continue into an optional transfer check that changes the situation while preserving the underlying connection. A later review session retrieves due concepts before showing notes. These additions measure whether understanding remains usable without changing the Locate → Weave → Build core shown above.
+
 ## Architecture
 
 ```text
@@ -70,7 +72,7 @@ The shared method lives in `shared/coaching-reference.md`. Directories under `ad
 
 ### MCP bridge
 
-`src/bridge.mjs` is a local Node.js MCP process. It communicates over standard input/output, opens no network listener, and exposes eight tools:
+`src/bridge.mjs` is a local Node.js MCP process. It communicates over standard input/output, opens no network listener, and exposes nine tools:
 
 | Tool | Purpose |
 |---|---|
@@ -80,14 +82,15 @@ The shared method lives in `shared/coaching-reference.md`. Directories under `ad
 | `loom_add_note` | Append a useful learning event. |
 | `loom_save_learning_state` | Persist the route and exact resume point. |
 | `loom_load_learning_state` | Restore the latest or a named learning session. |
+| `loom_list_due_reviews` | Find concepts due for delayed retrieval. |
 | `loom_show_relation_map` | Return a Mermaid block for the conversation. |
 | `loom_show_text_diagram` | Return a monospace diagram for the terminal. |
 
 ### Checkpoints
 
-`src/checkpoints.mjs` stores expected choice keys behind a random token. The learner receives the prompt, shuffled choices, token, and an “I do not know yet” option—but not the expected keys or rationale.
+`src/checkpoints.mjs` supports choice, free-recall, prediction, debugging, and transfer checks. It stores expected keys or private grading criteria behind a random token. The learner receives only the public prompt, response instructions, token, and an “I do not know yet” option—not the answer, criteria, or rationale.
 
-Results are `accurate`, `needs-repair`, or `knowledge-gap`. Tokens live in memory for up to six hours, work once, and disappear when the MCP process restarts.
+Results are `accurate`, `needs-repair`, or `knowledge-gap`. An optional confidence score records whether the learner was well calibrated, overconfident, or underconfident. Tokens live in memory for up to six hours, work once, and disappear when the MCP process restarts.
 
 ### Notebook and diagrams
 
@@ -99,14 +102,14 @@ Results are `accurate`, `needs-repair`, or `knowledge-gap`. Tokens live in memor
 
 Saved between sessions: skills, host instructions, notebooks, your materials, client MCP configuration, and learning state in `.concept-loom/sessions/`.
 
-The saved learning state includes the goal, route, secured connections, known gaps, and exact next step. Unfinished checkpoint cards, the whole conversation, and a review schedule are not persisted.
+The saved learning state includes the goal, approved route, later route extensions, secured connections, known gaps, session mode, exact next step, and an evidence ledger. Evidence distinguishes recognition, recall, application, and transfer, records hint use and confidence, and schedules the next retrieval review. Unfinished checkpoint cards and the whole conversation are not persisted.
 
 ## Current limitations
 
 - There is no separate UI; the host client supplies it.
 - Free-form explanations are judged by the model, not deterministic code.
 - Research depends on the host's web tools and permissions.
-- Review dates can be recorded but are not scheduled automatically.
+- Due reviews appear when a client asks for them; Concept Loom does not send background notifications.
 - A skill guides a model but cannot guarantee perfect compliance.
 
 ## Repository map

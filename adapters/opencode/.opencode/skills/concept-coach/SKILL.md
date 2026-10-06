@@ -14,3 +14,5 @@ Learning sessions must survive restarts. Start a notebook and persist progress w
 After every learner response, persistence must be your next action. Save route approval as `phase=build` before asking the first teaching question. Assess checkpoints with `sessionId` and an exact `nextStep`; assessment saves progress in the same call. Never send the next lesson message first.
 
 Use OpenCode's `question` tool for goals, preferences, and returned checkpoint choices. Use `loom_frame_checkpoint` and `loom_assess_checkpoint` only for questions with a defensible answer. Use the `evidence-scout` subagent to check uncertain or changing claims. Present a compact dependency route and wait for approval before teaching it.
+
+Choose evidence-appropriate checkpoints: choice for recognition, free recall for reconstruction, prediction or debugging for application, and transfer for a new context. Record confidence when useful and pass a stable `evidenceConcept`. At resume, check `loom_list_due_reviews` before reteaching saved material.

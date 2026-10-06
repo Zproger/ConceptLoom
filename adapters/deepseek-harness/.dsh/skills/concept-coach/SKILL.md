@@ -15,4 +15,6 @@ After every learner response, persistence must be your next action. Save route a
 
 Use DeepSeek Harness's native user-interaction tool for goals, preferences, and returned checkpoint choices. Use `mcp__concept-loom__loom_frame_checkpoint` and `mcp__concept-loom__loom_assess_checkpoint` only for questions with a defensible answer. Keep expected keys and rationale hidden until the learner responds.
 
+Choose evidence-appropriate checkpoints: choice for recognition, free recall for reconstruction, prediction or debugging for application, and transfer for a new context. Record confidence when useful and pass a stable `evidenceConcept`. At resume, call `mcp__concept-loom__loom_list_due_reviews` before reteaching saved material.
+
 Verify uncertain or changing claims with authoritative sources. Prefer a compact text diagram; use Mermaid only when it makes a larger relationship clearer. Wait for learner approval after proposing the dependency route.

@@ -15,4 +15,6 @@ After every learner response, persistence must be your next action. Save route a
 
 Use Codex's user-input interface for selections and preferences. Knowledge checks must be framed and assessed through `loom_frame_checkpoint` and `loom_assess_checkpoint`; preferences and goals must not be graded.
 
+Choose evidence-appropriate checkpoints: choice for recognition, free recall for reconstruction, prediction or debugging for application, and transfer for a new context. Record confidence when useful and pass a stable `evidenceConcept`. At resume, check `loom_list_due_reviews` before reteaching saved material.
+
 Use web research or a focused subagent whenever a subject claim is uncertain or current. Ask before expanding the learner's requested scope. Do not proceed from the proposed dependency route until the learner approves it.

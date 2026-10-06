@@ -46,6 +46,18 @@ Choose discovery questions when the learner can plausibly derive the next move. 
 
 ## Checkpoint construction
 
+Match the checkpoint to the evidence needed:
+
+- `choice` checks recognition or a sharply defined distinction;
+- `free-recall` checks whether the learner can reconstruct an idea without cues;
+- `prediction` checks whether a model can anticipate an outcome;
+- `debugging` checks diagnosis and repair;
+- `transfer` checks whether a connection survives in a meaningfully different situation.
+
+Do not use choice by default when an open response is practical. For non-choice checkpoints, provide short private criteria to `loom_frame_checkpoint`, collect the learner's exact response, then assess it against every criterion. Add confidence from 0–100 when it is useful for distinguishing a guess from a misconception. High-confidence errors need a prediction conflict or counterexample, not merely another explanation.
+
+For choice checkpoints:
+
 - Give every choice a short stable key unrelated to its display position.
 - Write the accurate claim, then create alternatives by changing one meaningful feature. This keeps wording parallel.
 - Alternatives should diagnose plausible models, never exploit ambiguity.
@@ -58,6 +70,29 @@ Call `loom_frame_checkpoint`, present the returned prompt and choices with the h
 - `accurate`: the connection is provisionally secure;
 - `needs-repair`: inspect the selected alternative and rebuild the connection;
 - `knowledge-gap`: teach into the declared gap without treating it as failure.
+
+An immediate accurate answer is provisional evidence, not permanent mastery. Name the stable concept in `evidenceConcept` so assessment records the format, confidence, hint dependence, demonstrated dimension, and next review date.
+
+## Transfer and review
+
+Locate, Weave, and Build remain the core learning cycle. Add these optional continuations when they serve the learner's goal:
+
+### Transfer
+
+After several connected points or at the end of Build, ask the learner to use the combined model in a new case. Change surface details while preserving the underlying dependency. A successful transfer checkpoint records stronger evidence than recognition alone; a failure identifies the connection to repair without invalidating everything already secured.
+
+### Review
+
+At the start of a resumed session or in `review` mode, call `loom_list_due_reviews`. Review a small number of due concepts through retrieval before showing notes. Prefer a different format from the most recent checkpoint. Repeated successful retrieval lengthens the next interval automatically.
+
+Available session modes do not replace the three phases:
+
+- `guided`: normal Locate → Weave → Build;
+- `practice`: brief explanation and more attempts;
+- `review`: delayed retrieval of saved concepts;
+- `challenge`: a larger task requiring several secured connections.
+
+If practice exposes a prerequisite missing from the approved map, add it to `routeExtensions` with its dependencies and a short reason. Tell the learner about the addition; preserve the original approved route rather than silently rewriting history.
 
 ## Evidence
 
@@ -89,6 +124,7 @@ The chat is temporary; the workspace is the durable memory.
 - For a knowledge checkpoint, call `loom_assess_checkpoint` immediately after the answer and provide `sessionId`, `currentStep`, and the exact `nextStep`. Assessment and progress persistence happen in the same tool call.
 - For every other learner response, call `loom_save_learning_state` before continuing. Also save before any pause or session end.
 - Save the complete route and complete secured/gap lists on every update, plus the exact `nextStep`. Do not save only the latest change.
+- Preserve the complete evidence ledger and route extensions on updates. Treat `secured` as a compatibility summary; use evidence dimensions to decide whether recognition, recall, application, and transfer have actually been demonstrated.
 - When the learner says “continue”, “resume”, or refers to an earlier lesson, call `loom_load_learning_state` before teaching anything. With no explicit session id, inspect the latest state and available session list.
 - Briefly tell the learner what was restored and continue from `nextStep`. Do not repeat Locate or already secured points unless the learner asks for review.
 - A checkpoint token is intentionally short-lived and must not be resumed. After restarting, use the saved conceptual state and create a fresh checkpoint when needed.

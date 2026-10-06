@@ -6,7 +6,7 @@
 
 **A portable AI learning workflow for Codex, Claude Code, OpenCode, and DeepSeek Harness.**
 
-Version 1.0.0 · MIT licensed · Node.js 20+
+Version 1.1.0 · MIT licensed · Node.js 20+
 
 [English](#concept-loom) · [Русский](docs/ru/README.md)
 
@@ -23,6 +23,8 @@ It works with topics you explore from scratch and with your own books, courses, 
 - Learn toward a practical outcome instead of surveying an entire field.
 - Expose gaps and misconceptions before building on them.
 - Check understanding with concealed-answer checkpoints.
+- Measure recognition, recall, application, and transfer separately.
+- Revisit due concepts through spaced retrieval across sessions.
 - Keep concise Markdown learning notes between sessions.
 - Use the same workflow in Codex, Claude Code, OpenCode, and DeepSeek Harness.
 - Show compact text or Mermaid diagrams directly in the conversation.

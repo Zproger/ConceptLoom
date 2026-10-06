@@ -29,6 +29,8 @@ The answer and rationale never appear in the first result. A token is removed as
 
 Checkpoint cards deliberately remain ephemeral. Notebooks and learning-state files are persistent workspace artifacts. This avoids storing hidden answer material on disk while keeping the learner's useful record portable.
 
+Learning state schema version 2 adds an evidence ledger without invalidating version 1 sessions. Each stable concept accumulates attempts, successful retrievals, demonstrated dimensions, confidence calibration, hint dependence, transfer evidence, and a due date. `secured` remains a compact compatibility summary rather than the sole mastery signal. Route extensions preserve prerequisites discovered during Build without rewriting the route the learner approved.
+
 ## Portability
 
 The server implements the small JSON-RPC surface required for MCP initialization, tool discovery, and tool invocation directly on Node's standard library. There is no build step and no SDK version coupling. Each host adapter contains only the conventions that genuinely differ between hosts. DeepSeek Harness discovers the project skill under `.dsh/skills` and receives the stdio MCP connection through `.dsh/concept-loom.patch.yml` at launch.

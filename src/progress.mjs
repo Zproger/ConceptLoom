@@ -1,7 +1,15 @@
 import { mkdir, readFile, readdir, rename, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 
-const PHASES = new Set(["locate", "weave", "build", "complete"]);
+const PHASES = new Set(["locate", "weave", "build", "transfer", "review", "complete"]);
+const MODES = new Set(["guided", "practice", "review", "challenge"]);
+const CHECKPOINT_DIMENSIONS = {
+  choice: "recognition",
+  "free-recall": "recall",
+  prediction: "application",
+  debugging: "application",
+  transfer: "transfer",
+};
 
 function requiredText(value, label) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${label} must be a non-empty string`);
@@ -17,6 +25,28 @@ function textList(value, label) {
   if (value === undefined) return undefined;
   if (!Array.isArray(value)) throw new Error(`${label} must be an array`);
   return value.map((entry, index) => requiredText(entry, `${label}[${index}]`));
+}
+
+function objectValue(value, label) {
+  if (value === undefined) return undefined;
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${label} must be an object`);
+  return value;
+}
+
+function routeExtensionList(value) {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value)) throw new Error("routeExtensions must be an array");
+  return value.map((entry, index) => {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+      throw new Error(`routeExtensions[${index}] must be an object`);
+    }
+    return {
+      concept: requiredText(entry.concept, `routeExtensions[${index}].concept`),
+      dependsOn: textList(entry.dependsOn, `routeExtensions[${index}].dependsOn`) ?? [],
+      reason: optionalText(entry.reason, `routeExtensions[${index}].reason`),
+      addedAt: optionalText(entry.addedAt, `routeExtensions[${index}].addedAt`) ?? new Date().toISOString(),
+    };
+  });
 }
 
 function safeSessionId(value) {
@@ -50,18 +80,23 @@ export async function saveLearningState(baseDirectory, input) {
   const previous = await readState(destination);
   const phase = requiredText(input.phase, "phase").toLowerCase();
   if (!PHASES.has(phase)) throw new Error(`phase must be one of: ${[...PHASES].join(", ")}`);
+  const mode = optionalText(input.mode, "mode")?.toLowerCase() ?? previous?.mode ?? "guided";
+  if (!MODES.has(mode)) throw new Error(`mode must be one of: ${[...MODES].join(", ")}`);
 
   const now = new Date().toISOString();
   const state = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     sessionId,
     topic: requiredText(input.topic, "topic"),
     goal: requiredText(input.goal, "goal"),
     phase,
+    mode,
     notebookPath: optionalText(input.notebookPath, "notebookPath"),
     route: textList(input.route, "route") ?? [],
     secured: textList(input.secured, "secured") ?? [],
     gaps: textList(input.gaps, "gaps") ?? [],
+    evidence: objectValue(input.evidence, "evidence") ?? previous?.evidence ?? {},
+    routeExtensions: routeExtensionList(input.routeExtensions) ?? previous?.routeExtensions ?? [],
     currentStep: optionalText(input.currentStep, "currentStep"),
     nextStep: requiredText(input.nextStep, "nextStep"),
     learnerContext: optionalText(input.learnerContext, "learnerContext"),
@@ -111,6 +146,32 @@ export async function loadLearningState(baseDirectory, input = {}) {
   };
 }
 
+export async function listDueReviews(baseDirectory, input = {}) {
+  const now = input.now ? new Date(requiredText(input.now, "now")) : new Date();
+  if (Number.isNaN(now.getTime())) throw new Error("now must be an ISO date");
+  const { sessions } = await loadLearningState(baseDirectory);
+  const due = [];
+  for (const summary of sessions) {
+    const { state } = await loadLearningState(baseDirectory, { sessionId: summary.sessionId });
+    for (const [concept, evidence] of Object.entries(state.evidence ?? {})) {
+      if (!evidence?.reviewAfter) continue;
+      const reviewAt = new Date(evidence.reviewAfter);
+      if (!Number.isNaN(reviewAt.getTime()) && reviewAt <= now) {
+        due.push({
+          sessionId: state.sessionId,
+          topic: state.topic,
+          concept,
+          reviewAfter: evidence.reviewAfter,
+          lastFormat: evidence.lastFormat,
+          transferPassed: evidence.transferPassed === true,
+        });
+      }
+    }
+  }
+  due.sort((left, right) => left.reviewAfter.localeCompare(right.reviewAfter));
+  return { asOf: now.toISOString(), due };
+}
+
 function addUnique(items, value) {
   return value && !items.includes(value) ? [...items, value] : items;
 }
@@ -126,6 +187,36 @@ export async function recordCheckpointAssessment(baseDirectory, input, assessmen
   const gaps = assessment.outcome === "knowledge-gap"
     ? addUnique(previous.gaps ?? [], gap ?? input.currentStep ?? previous.currentStep)
     : previous.gaps ?? [];
+  const evidenceConcept = optionalText(input.evidenceConcept, "evidenceConcept")
+    ?? securedConnection
+    ?? input.currentStep
+    ?? previous.currentStep;
+  const evidence = { ...(previous.evidence ?? {}) };
+  if (evidenceConcept) {
+    const earlier = evidence[evidenceConcept] ?? {};
+    const format = assessment.format ?? "choice";
+    const dimension = CHECKPOINT_DIMENSIONS[format] ?? "recognition";
+    const dimensionResult = assessment.outcome === "accurate" ? "demonstrated" : "needs-work";
+    const consecutiveSuccesses = assessment.outcome === "accurate" ? (earlier.consecutiveSuccesses ?? 0) + 1 : 0;
+    evidence[evidenceConcept] = {
+      ...earlier,
+      attempts: (earlier.attempts ?? 0) + 1,
+      successes: (earlier.successes ?? 0) + (assessment.outcome === "accurate" ? 1 : 0),
+      consecutiveSuccesses,
+      dimensions: { ...(earlier.dimensions ?? {}), [dimension]: dimensionResult },
+      lastFormat: format,
+      lastOutcome: assessment.outcome,
+      lastConfidence: assessment.confidence,
+      lastCalibration: assessment.calibration,
+      hintUsed: input.hintUsed === true,
+      transferPassed: earlier.transferPassed === true || (format === "transfer" && assessment.outcome === "accurate"),
+      lastAttemptAt: new Date().toISOString(),
+      lastSuccessfulRetrieval: assessment.outcome === "accurate"
+        ? new Date().toISOString()
+        : earlier.lastSuccessfulRetrieval,
+      reviewAfter: nextReviewDate(consecutiveSuccesses, assessment.outcome),
+    };
+  }
 
   return saveLearningState(baseDirectory, {
     ...previous,
@@ -133,10 +224,25 @@ export async function recordCheckpointAssessment(baseDirectory, input, assessmen
     nextStep: requiredText(input.nextStep, "nextStep"),
     secured,
     gaps,
+    evidence,
     lastCheckpoint: {
       outcome: assessment.outcome,
       selected: assessment.selected,
+      response: assessment.response,
+      format: assessment.format ?? "choice",
+      confidence: assessment.confidence,
+      calibration: assessment.calibration,
       assessedAt: new Date().toISOString(),
     },
   });
+}
+
+function nextReviewDate(consecutiveSuccesses, outcome) {
+  const intervals = [1, 3, 7, 14, 30];
+  const days = outcome === "accurate"
+    ? intervals[Math.min(Math.max(consecutiveSuccesses - 1, 0), intervals.length - 1)]
+    : 1;
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString();
 }

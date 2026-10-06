@@ -3,7 +3,7 @@ import readline from "node:readline";
 import { composeCheckpoint, assessCheckpoint } from "./checkpoints.mjs";
 import { beginNotebook, addNotebookEntry } from "./notebook.mjs";
 import { prepareMermaid, prepareTextDiagram } from "./diagrams.mjs";
-import { loadLearningState, recordCheckpointAssessment, saveLearningState } from "./progress.mjs";
+import { listDueReviews, loadLearningState, recordCheckpointAssessment, saveLearningState } from "./progress.mjs";
 
 const PROTOCOL_VERSION = "2025-06-18";
 const workspace = process.cwd();
@@ -11,12 +11,13 @@ const workspace = process.cwd();
 const toolCatalog = [
   {
     name: "loom_frame_checkpoint",
-    description: "Create a shuffled knowledge checkpoint without revealing the expected answer. Present the returned choices to the learner, then call loom_assess_checkpoint with their selection.",
+    description: "Create a concealed-answer checkpoint. Supports choice, free-recall, prediction, debugging, and transfer formats. Present only the returned public card, then assess the learner's response.",
     inputSchema: {
       type: "object",
-      required: ["prompt", "choices", "expected", "rationale"],
+      required: ["prompt", "rationale"],
       properties: {
         prompt: { type: "string" },
+        format: { enum: ["choice", "free-recall", "prediction", "debugging", "transfer"], default: "choice" },
         choices: {
           type: "array",
           minItems: 2,
@@ -27,6 +28,7 @@ const toolCatalog = [
           },
         },
         expected: { oneOf: [{ type: "string" }, { type: "array", items: { type: "string" } }] },
+        criteria: { type: "array", items: { type: "string" }, description: "Private grading criteria required for non-choice formats." },
         rationale: { type: "string" },
         multiple: { type: "boolean", default: false },
         mix: { type: "boolean", default: true },
@@ -35,18 +37,23 @@ const toolCatalog = [
   },
   {
     name: "loom_assess_checkpoint",
-    description: "Grade a checkpoint and atomically persist its resume point. Call immediately after the learner answers, before any explanation or next question. Use __gap__ for 'I do not know yet'.",
+    description: "Grade a checkpoint and atomically persist its evidence and resume point. For an open checkpoint, provide response and a rubric-based verdict. Call immediately after the learner answers.",
     inputSchema: {
       type: "object",
-      required: ["token", "selected", "sessionId", "nextStep"],
+      required: ["token", "sessionId", "nextStep"],
       properties: {
         token: { type: "string" },
         selected: { oneOf: [{ type: "string" }, { type: "array", items: { type: "string" } }] },
+        response: { type: "string", description: "Learner's response for a non-choice checkpoint, or __gap__." },
+        verdict: { enum: ["accurate", "needs-repair", "knowledge-gap"], description: "Rubric-based outcome for a non-choice response." },
+        confidence: { type: "integer", minimum: 0, maximum: 100 },
         sessionId: { type: "string" },
         currentStep: { type: "string" },
         nextStep: { type: "string", description: "Exact action to resume with if the client closes immediately after assessment." },
         securedConnection: { type: "string", description: "Connection to mark secure only when the answer is accurate." },
         gap: { type: "string", description: "Gap to record when the learner selects __gap__." },
+        evidenceConcept: { type: "string", description: "Stable concept name whose evidence record this attempt updates." },
+        hintUsed: { type: "boolean", default: false },
         note: { type: "string" },
       },
     },
@@ -87,11 +94,27 @@ const toolCatalog = [
         sessionId: { type: "string", description: "Stable short id, for example ja4-basics." },
         topic: { type: "string" },
         goal: { type: "string" },
-        phase: { enum: ["locate", "weave", "build", "complete"] },
+        phase: { enum: ["locate", "weave", "build", "transfer", "review", "complete"] },
+        mode: { enum: ["guided", "practice", "review", "challenge"], default: "guided" },
         notebookPath: { type: "string" },
         route: { type: "array", items: { type: "string" } },
         secured: { type: "array", items: { type: "string" } },
         gaps: { type: "array", items: { type: "string" } },
+        evidence: { type: "object", description: "Per-concept evidence ledger; preserve the complete object on updates." },
+        routeExtensions: {
+          type: "array",
+          description: "Prerequisites discovered after route approval; additions do not replace the approved route.",
+          items: {
+            type: "object",
+            required: ["concept"],
+            properties: {
+              concept: { type: "string" },
+              dependsOn: { type: "array", items: { type: "string" } },
+              reason: { type: "string" },
+              addedAt: { type: "string" },
+            },
+          },
+        },
         currentStep: { type: "string" },
         nextStep: { type: "string" },
         learnerContext: { type: "string" },
@@ -104,6 +127,14 @@ const toolCatalog = [
     inputSchema: {
       type: "object",
       properties: { sessionId: { type: "string" } },
+    },
+  },
+  {
+    name: "loom_list_due_reviews",
+    description: "List concepts whose delayed retrieval review is due across saved sessions. Use at the start of review mode or when the learner asks what to revisit.",
+    inputSchema: {
+      type: "object",
+      properties: { now: { type: "string", description: "Optional ISO timestamp for deterministic clients and tests." } },
     },
   },
   {
@@ -148,6 +179,7 @@ async function invokeTool(name, args) {
     }
     case "loom_save_learning_state": return textResult(await saveLearningState(workspace, args));
     case "loom_load_learning_state": return textResult(await loadLearningState(workspace, args));
+    case "loom_list_due_reviews": return textResult(await listDueReviews(workspace, args));
     case "loom_show_relation_map": return textResult(prepareMermaid(args));
     case "loom_show_text_diagram": return textResult(prepareTextDiagram(args));
     default: throw new Error(`unknown tool: ${name}`);
@@ -163,7 +195,7 @@ async function route(message) {
       result: {
         protocolVersion: PROTOCOL_VERSION,
         capabilities: { tools: { listChanged: false } },
-        serverInfo: { name: "concept-loom", version: "1.0.0" },
+        serverInfo: { name: "concept-loom", version: "1.1.0" },
         instructions: "Use loom tools with the Concept Loom coaching skill. Never expose expected checkpoint answers before the learner responds.",
       },
     };

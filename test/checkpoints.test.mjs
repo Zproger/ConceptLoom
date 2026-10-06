@@ -51,3 +51,44 @@ test("checkpoint tokens can only be assessed once", () => {
   assessCheckpoint({ token: card.token, selected: "a" });
   assert.throws(() => assessCheckpoint({ token: card.token, selected: "a" }), /unknown or expired/);
 });
+
+test("frames and assesses an open transfer checkpoint without leaking criteria", () => {
+  const card = composeCheckpoint({
+    format: "transfer",
+    prompt: "Apply the principle to a new case.",
+    criteria: ["Names the relevant constraint", "Justifies the decision"],
+    rationale: "Both the constraint and its consequence are needed.",
+  });
+  assert.equal(card.format, "transfer");
+  assert.equal("criteria" in card, false);
+  assert.equal("rationale" in card, false);
+
+  const result = assessCheckpoint({
+    token: card.token,
+    response: "The new case is limited by the same constraint, so the decision follows.",
+    verdict: "accurate",
+    confidence: 82,
+  });
+  assert.equal(result.outcome, "accurate");
+  assert.equal(result.calibration, "well-calibrated");
+  assert.equal(result.criteria.length, 2);
+});
+
+test("detects confident incorrect answers and validates confidence", () => {
+  const first = composeCheckpoint({
+    prompt: "Pick one",
+    choices: [{ key: "a", label: "A" }, { key: "b", label: "B" }],
+    expected: "a",
+    rationale: "A is expected.",
+  });
+  const result = assessCheckpoint({ token: first.token, selected: "b", confidence: 90 });
+  assert.equal(result.calibration, "overconfident");
+
+  const second = composeCheckpoint({
+    prompt: "Pick one",
+    choices: [{ key: "a", label: "A" }, { key: "b", label: "B" }],
+    expected: "a",
+    rationale: "A is expected.",
+  });
+  assert.throws(() => assessCheckpoint({ token: second.token, selected: "a", confidence: 101 }), /0 to 100/);
+});

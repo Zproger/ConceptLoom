@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtemp, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { loadLearningState, recordCheckpointAssessment, saveLearningState } from "../src/progress.mjs";
+import { listDueReviews, loadLearningState, recordCheckpointAssessment, saveLearningState } from "../src/progress.mjs";
 
 test("persists and restores a learning session", async () => {
   const root = await mkdtemp(join(tmpdir(), "loom-progress-"));
@@ -88,5 +88,47 @@ test("records checkpoint outcome before the lesson continues", async () => {
   assert.equal(updated.nextStep, "Explain JA4 fields");
   assert.deepEqual(updated.secured, ["TLS ClientHello structure"]);
   assert.equal(updated.lastCheckpoint.outcome, "accurate");
+  assert.equal(updated.evidence["TLS ClientHello structure"].dimensions.recognition, "demonstrated");
+  assert.equal(updated.evidence["TLS ClientHello structure"].attempts, 1);
   assert.equal(updated.revision, 2);
+});
+
+test("tracks transfer evidence, confidence, hints, and delayed review", async () => {
+  const root = await mkdtemp(join(tmpdir(), "loom-progress-"));
+  await saveLearningState(root, {
+    sessionId: "transactions",
+    topic: "Transactions",
+    goal: "Choose isolation levels",
+    phase: "build",
+    mode: "practice",
+    route: ["Atomicity", "Isolation"],
+    routeExtensions: [{ concept: "Write skew", dependsOn: ["Isolation"], reason: "Found during practice" }],
+    nextStep: "Try a transfer problem",
+  });
+
+  const updated = await recordCheckpointAssessment(root, {
+    sessionId: "transactions",
+    currentStep: "Isolation",
+    nextStep: "Review tomorrow",
+    evidenceConcept: "Isolation trade-offs",
+    hintUsed: false,
+  }, {
+    format: "transfer",
+    outcome: "accurate",
+    response: "Use serializable because the invariant spans rows.",
+    confidence: 85,
+    calibration: "well-calibrated",
+  });
+
+  const evidence = updated.evidence["Isolation trade-offs"];
+  assert.equal(updated.mode, "practice");
+  assert.equal(updated.routeExtensions[0].concept, "Write skew");
+  assert.equal(evidence.dimensions.transfer, "demonstrated");
+  assert.equal(evidence.transferPassed, true);
+  assert.equal(evidence.lastConfidence, 85);
+  assert.match(evidence.reviewAfter, /^\d{4}-\d{2}-\d{2}T/);
+
+  const reviews = await listDueReviews(root, { now: "2100-01-01T00:00:00.000Z" });
+  assert.equal(reviews.due.length, 1);
+  assert.equal(reviews.due[0].concept, "Isolation trade-offs");
 });
