@@ -92,7 +92,7 @@
 
   <g font-family="Inter, Arial, sans-serif">
     <rect x="305" y="493" width="590" height="58" rx="18" fill="#0F172A"/>
-    <text x="600" y="529" text-anchor="middle" fill="#F8FAFC" font-size="20" font-weight="600">Codex  ·  Claude Code  ·  OpenCode</text>
+    <text x="600" y="529" text-anchor="middle" fill="#F8FAFC" font-size="20" font-weight="600">Codex  ·  Claude Code  ·  OpenCode  ·  DeepSeek Harness</text>
   </g>
 
   <text x="600" y="590" text-anchor="middle" fill="#64748B" font-family="Inter, Arial, sans-serif" font-size="16">A local, portable learning workflow · Markdown-first · MIT licensed</text>

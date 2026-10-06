@@ -2,6 +2,14 @@
 
 All notable changes to Concept Loom are documented here.
 
+## Unreleased
+
+### Added
+
+- DeepSeek Harness adapter with native `.dsh/skills` discovery.
+- Generated Harness MCP patch for Web and headless profiles.
+- Installer coverage for normal and `--skip-mcp` DeepSeek Harness setup.
+
 ## 1.0.0 — 2026-10-01
 
 First public release.

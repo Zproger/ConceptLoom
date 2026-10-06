@@ -1,0 +1,9 @@
+- insert:
+    - id: mcp-concept-loom
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: concept-loom
+        transport: stdio
+        command: node
+        args: ['__SERVER_PATH__']
+        failOnStartupError: true

@@ -2,7 +2,7 @@
 
 [Documentation home](../../README.md) · [Русская версия](../ru/how-it-works.md)
 
-Concept Loom is not another AI model or a standalone teaching application. It is a learning workflow plus a small local MCP server connected to Codex, Claude Code, or OpenCode.
+Concept Loom is not another AI model or a standalone teaching application. It is a learning workflow plus a small local MCP server connected to Codex, Claude Code, OpenCode, or DeepSeek Harness.
 
 ## The simple model
 
@@ -49,7 +49,7 @@ Important ideas should also be explained freely or applied in a new situation. S
 
 ```text
 ┌──────────────────────────────────────┐
-│ Codex / Claude Code / OpenCode       │
+│ Codex / Claude / OpenCode / DeepSeek │
 │ conversation, files, research, UI    │
 └──────────────────┬───────────────────┘
                    │ MCP calls
@@ -66,7 +66,7 @@ Important ideas should also be explained freely or applied in a new situation. S
 
 ### Skills and adapters
 
-The shared method lives in `shared/coaching-reference.md`. Directories under `adapters/` translate it into each client's conventions. `scripts/setup.mjs` installs the right adapter without overwriting existing configuration.
+The shared method lives in `shared/coaching-reference.md`. Directories under `adapters/` translate it into each client's conventions. `scripts/setup.mjs` installs the right adapter without overwriting existing configuration. The DeepSeek Harness adapter uses its native `.dsh/skills` discovery and supplies a profile patch that connects the local MCP process through `@deepseek-ai/dsh-mcp-client`.
 
 ### MCP bridge
 
@@ -97,7 +97,7 @@ Results are `accurate`, `needs-repair`, or `knowledge-gap`. Tokens live in memor
 
 ## What persists
 
-Saved between sessions: skills, host instructions, notebooks, your materials, Codex MCP registration, and learning state in `.concept-loom/sessions/`.
+Saved between sessions: skills, host instructions, notebooks, your materials, client MCP configuration, and learning state in `.concept-loom/sessions/`.
 
 The saved learning state includes the goal, route, secured connections, known gaps, and exact next step. Unfinished checkpoint cards, the whole conversation, and a review schedule are not persisted.
 

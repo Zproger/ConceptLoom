@@ -12,6 +12,6 @@ The connected AI client may still read local source materials or use network too
 
 ## Before publishing a fork
 
-- Do not commit `.env`, `.mcp.json`, `opencode.json`, credentials, private keys, books, courses, or generated learning state.
+- Do not commit `.env`, `.mcp.json`, `opencode.json`, DeepSeek Harness profile configuration, credentials, private keys, books, courses, or generated learning state.
 - Inspect `git diff --cached` before every push.
 - If a secret was ever committed, revoke it first; removing it in a later commit is not sufficient.

@@ -1,6 +1,6 @@
 # Concept Loom
 
-**Переносимый AI-подход к обучению для Codex, Claude Code и OpenCode.**
+**Переносимый AI-подход к обучению для Codex, Claude Code, OpenCode и DeepSeek Harness.**
 
 [Русский](#concept-loom) · [English](../../README.md)
 
@@ -18,7 +18,7 @@ Concept Loom превращает coding-агента в структуриро�
 - Находить пробелы и заблуждения до построения следующих идей.
 - Проверять понимание вопросами со скрытым ответом.
 - Сохранять компактный Markdown-конспект между сессиями.
-- Использовать один подход в трёх поддерживаемых клиентах.
+- Использовать один подход в четырёх поддерживаемых клиентах.
 
 ## Документация
 
@@ -54,7 +54,16 @@ codex
 ```bash
 node scripts/setup.mjs claude-code --target /путь/к/учебной-папке
 node scripts/setup.mjs opencode --target /путь/к/учебной-папке
+node scripts/setup.mjs deepseek-harness --target /путь/к/учебной-папке
 ```
+
+Для DeepSeek Harness установщик создаёт нативный project skill и отдельный MCP patch. Запускайте Harness из учебной папки так:
+
+```bash
+npx @deepseek-ai/dsh --profile web --patch .dsh/concept-loom.patch.yml
+```
+
+DeepSeek Harness пока находится в developer preview, поэтому его формат конфигурации может меняться. Флаг `--skip-mcp` устанавливает только `.dsh/skills/concept-coach`, если MCP-сервер вы подключаете через собственный профиль Harness.
 
 Установщик не перезаписывает существующую конфигурацию. При конфликте вручную объедините её со сгенерированным файлом Concept Loom.
 
