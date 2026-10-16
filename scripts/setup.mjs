@@ -132,7 +132,7 @@ async function installClaude() {
   await copyNew(join(source, ".claude", "agents"), join(target, ".claude", "agents"));
   const guidance = await installGuidance(join(source, "CLAUDE.md"), "CLAUDE.md", "CONCEPT_LOOM_CLAUDE.md");
   await materializeTemplate(join(source, ".mcp.json.template"), join(target, ".mcp.json"), {
-    __SERVER_PATH__: join(projectRoot, "src", "bridge.mjs"),
+    __SERVER_PATH__: JSON.stringify(join(projectRoot, "src", "bridge.mjs")).slice(1, -1),
   });
   process.stdout.write(`Installed Claude Code assets in ${target}\n`);
   if (guidance !== "CLAUDE.md") process.stdout.write("Merge CONCEPT_LOOM_CLAUDE.md into your existing CLAUDE.md.\n");
@@ -150,7 +150,7 @@ async function installOpenCode() {
   await copyNew(join(source, ".opencode", "agents"), join(target, ".opencode", "agents"));
   const guidance = await installGuidance(join(source, "AGENTS.md"), "AGENTS.md", "CONCEPT_LOOM_AGENTS.md");
   await materializeTemplate(join(source, "opencode.json.template"), join(target, "opencode.json"), {
-    __SERVER_PATH__: join(projectRoot, "src", "bridge.mjs"),
+    __SERVER_PATH__: JSON.stringify(join(projectRoot, "src", "bridge.mjs")).slice(1, -1),
   });
   process.stdout.write(`Installed OpenCode assets in ${target}\n`);
   if (guidance !== "AGENTS.md") process.stdout.write("Merge CONCEPT_LOOM_AGENTS.md into your existing AGENTS.md.\n");

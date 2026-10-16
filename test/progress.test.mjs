@@ -132,3 +132,14 @@ test("tracks transfer evidence, confidence, hints, and delayed review", async ()
   assert.equal(reviews.due.length, 1);
   assert.equal(reviews.due[0].concept, "Isolation trade-offs");
 });
+
+test("partial save keeps the approved route, secured connections, and gaps", async () => {
+  const root = await mkdtemp(join(tmpdir(), "loom-progress-"));
+  const base = { sessionId: "partial", topic: "T", goal: "G", phase: "build", nextStep: "Next" };
+  await saveLearningState(root, { ...base, route: ["A", "B"], secured: ["A"], gaps: ["X"] });
+  const state = await saveLearningState(root, base);
+
+  assert.deepEqual(state.route, ["A", "B"]);
+  assert.deepEqual(state.secured, ["A"]);
+  assert.deepEqual(state.gaps, ["X"]);
+});

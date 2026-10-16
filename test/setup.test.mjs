@@ -41,3 +41,16 @@ test("DeepSeek Harness --skip-mcp installs only workspace guidance", async () =>
   await stat(join(target, ".dsh", "skills", "concept-coach", "SKILL.md"));
   await assert.rejects(stat(join(target, ".dsh", "concept-loom.patch.yml")), { code: "ENOENT" });
 });
+
+test("Claude Code installer writes a valid .mcp.json", async () => {
+  const target = await mkdtemp(join(tmpdir(), "concept-loom-claude-"));
+  const result = spawnSync(
+    process.execPath,
+    [join(projectRoot, "scripts", "setup.mjs"), "claude-code", "--target", target],
+    { encoding: "utf8" },
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+  const config = JSON.parse(await readFile(join(target, ".mcp.json"), "utf8"));
+  assert.deepEqual(config.mcpServers["concept-loom"].args, [join(projectRoot, "src", "bridge.mjs")]);
+});
