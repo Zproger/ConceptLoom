@@ -72,7 +72,7 @@ The shared method lives in `shared/coaching-reference.md`. Directories under `ad
 
 ### MCP bridge
 
-`src/bridge.mjs` is a local Node.js MCP process. It communicates over standard input/output, opens no network listener, and exposes nine tools:
+`src/bridge.mjs` is a local Node.js MCP process. It communicates over standard input/output, opens no network listener, and exposes fourteen tools:
 
 | Tool | Purpose |
 |---|---|
@@ -83,8 +83,19 @@ The shared method lives in `shared/coaching-reference.md`. Directories under `ad
 | `loom_save_learning_state` | Persist the route and exact resume point. |
 | `loom_load_learning_state` | Restore the latest or a named learning session. |
 | `loom_list_due_reviews` | Find concepts due for delayed retrieval. |
+| `loom_recall_knowledge` | Look up what the learner already knows across projects. |
+| `loom_forget_knowledge` | Remove a concept or mark it for re-verification. |
+| `loom_import_knowledge` | Import this workspace's existing sessions into the knowledge map. |
+| `loom_save_goal` | Create or update a long-term goal and its milestones. |
+| `loom_next_milestone` | Choose whether to review, continue, or start the next milestone. |
 | `loom_show_relation_map` | Return a Mermaid block for the conversation. |
 | `loom_show_text_diagram` | Return a monospace diagram for the terminal. |
+
+### Knowledge map and goals
+
+`src/knowledge.mjs` keeps one knowledge map per user at `~/.concept-loom/knowledge.json`, shared by all projects. Every checkpoint with an `evidenceConcept` updates it. When you start a new topic, the coach looks up its prerequisites there (for example, Docker before Kubernetes) and builds on them. Knowledge that has not been verified for 90 days, or that you report forgetting, is shown as `needs-verification`, and the coach re-checks it with a short question instead of assuming it. Set `CONCEPT_LOOM_HOME` to another folder to relocate the map, or to `off` to disable it. The file stays on your machine.
+
+`src/goals.mjs` stores long-term goals in `.concept-loom/goals/`. A goal is an ordered list of milestones, each learned in its own session. A milestone can only be marked secured when its session has a successful checkpoint, and `loom_next_milestone` puts overdue reviews of earlier milestones before new material.
 
 ### Checkpoints
 
@@ -100,7 +111,7 @@ Results are `accurate`, `needs-repair`, or `knowledge-gap`. An optional confiden
 
 ## What persists
 
-Saved between sessions: skills, host instructions, notebooks, your materials, client MCP configuration, and learning state in `.concept-loom/sessions/`.
+Saved between sessions: skills, host instructions, notebooks, your materials, client MCP configuration, and learning state in `.concept-loom/sessions/` and goals in `.concept-loom/goals/`. A cross-project knowledge map is saved once per user in `~/.concept-loom/knowledge.json`.
 
 The saved learning state includes the goal, approved route, later route extensions, secured connections, known gaps, session mode, exact next step, and an evidence ledger. Evidence distinguishes recognition, recall, application, and transfer, records hint use and confidence, and schedules the next retrieval review. Unfinished checkpoint cards and the whole conversation are not persisted.
 

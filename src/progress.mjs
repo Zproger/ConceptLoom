@@ -1,5 +1,6 @@
 import { mkdir, readFile, readdir, rename, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
+import { syncKnowledge } from "./knowledge.mjs";
 
 const PHASES = new Set(["locate", "weave", "build", "transfer", "review", "complete"]);
 const MODES = new Set(["guided", "practice", "review", "challenge"]);
@@ -57,6 +58,19 @@ function safeSessionId(value) {
   return id;
 }
 
+function safeIdentifier(value, label) {
+  const id = requiredText(value, label);
+  if (!/^[a-z0-9][a-z0-9_-]{0,63}$/i.test(id)) {
+    throw new Error(`${label} may contain only letters, numbers, underscores, and hyphens`);
+  }
+  return id;
+}
+
+function optionalIdentifier(value, label) {
+  if (value === undefined || value === null || value === "") return undefined;
+  return safeIdentifier(value, label);
+}
+
 function storageDirectory(baseDirectory) {
   return resolve(baseDirectory, ".concept-loom", "sessions");
 }
@@ -85,13 +99,15 @@ export async function saveLearningState(baseDirectory, input) {
 
   const now = new Date().toISOString();
   const state = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     sessionId,
     topic: requiredText(input.topic, "topic"),
     goal: requiredText(input.goal, "goal"),
     phase,
     mode,
     notebookPath: optionalText(input.notebookPath, "notebookPath"),
+    goalId: optionalIdentifier(input.goalId, "goalId") ?? previous?.goalId,
+    milestone: optionalText(input.milestone, "milestone") ?? previous?.milestone,
     route: textList(input.route, "route") ?? previous?.route ?? [],
     secured: textList(input.secured, "secured") ?? previous?.secured ?? [],
     gaps: textList(input.gaps, "gaps") ?? previous?.gaps ?? [],
@@ -111,6 +127,19 @@ export async function saveLearningState(baseDirectory, input) {
   await writeFile(temporary, `${JSON.stringify(state, null, 2)}\n`, "utf8");
   await rename(temporary, destination);
   return state;
+}
+
+export async function listLearningStates(baseDirectory) {
+  const directory = storageDirectory(baseDirectory);
+  let names;
+  try {
+    names = (await readdir(directory)).filter((name) => name.endsWith(".json"));
+  } catch (error) {
+    if (error?.code === "ENOENT") return [];
+    throw error;
+  }
+  const states = await Promise.all(names.map((name) => readState(join(directory, name))));
+  return states.filter(Boolean);
 }
 
 export async function loadLearningState(baseDirectory, input = {}) {
@@ -218,7 +247,7 @@ export async function recordCheckpointAssessment(baseDirectory, input, assessmen
     };
   }
 
-  return saveLearningState(baseDirectory, {
+  const saved = await saveLearningState(baseDirectory, {
     ...previous,
     currentStep: input.currentStep ?? previous.currentStep,
     nextStep: requiredText(input.nextStep, "nextStep"),
@@ -235,6 +264,10 @@ export async function recordCheckpointAssessment(baseDirectory, input, assessmen
       assessedAt: new Date().toISOString(),
     },
   });
+
+  if (!evidenceConcept) return saved;
+  const knowledge = await syncKnowledge(baseDirectory, saved, { concepts: [evidenceConcept] });
+  return knowledge.warning ? { ...saved, knowledgeWarning: knowledge.warning } : saved;
 }
 
 function nextReviewDate(consecutiveSuccesses, outcome) {

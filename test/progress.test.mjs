@@ -5,6 +5,9 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { listDueReviews, loadLearningState, recordCheckpointAssessment, saveLearningState } from "../src/progress.mjs";
 
+// Keep these tests away from the real shared knowledge map in the home directory.
+process.env.CONCEPT_LOOM_HOME = "off";
+
 test("persists and restores a learning session", async () => {
   const root = await mkdtemp(join(tmpdir(), "loom-progress-"));
   await saveLearningState(root, {
