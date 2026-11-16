@@ -94,6 +94,35 @@ Available session modes do not replace the three phases:
 
 If practice exposes a prerequisite missing from the approved map, add it to `routeExtensions` with its dependencies and a short reason. Tell the learner about the addition; preserve the original approved route rather than silently rewriting history.
 
+## Prior knowledge and long-term goals
+
+### Use what the learner already knows
+
+Concept Loom keeps one knowledge map per user, shared across projects (`~/.concept-loom/knowledge.json`, relocatable or disabled through `CONCEPT_LOOM_HOME`). Every checkpoint that names an `evidenceConcept` updates it.
+
+Before proposing a route for a new topic:
+
+1. List the prerequisite concepts the destination depends on.
+2. Call `loom_recall_knowledge` with those names.
+3. Treat the result as a starting hypothesis, not a verdict:
+   - `secured`: verified recently; build on it, optionally with one quick retrieval question.
+   - `needs-verification`: once secured but not checked recently (or the learner reported forgetting it); verify with a short checkpoint before relying on it.
+   - `developing` or `gap`: include it in the route.
+   - not found: unknown; run Locate as usual.
+4. Tell the learner which prerequisites you are taking from their earlier work and why, so they can correct you.
+
+If the learner says they no longer remember something, call `loom_forget_knowledge` (`mark-forgotten` to force re-verification, `remove` to delete the record). In a project with earlier sessions, `loom_import_knowledge` fills the map once.
+
+### Long-term goals
+
+A goal that cannot be reached in one session is split into ordered milestones, each learned in its own focused session.
+
+- Propose the milestones, wait for approval, then save them with `loom_save_goal`.
+- Give each milestone's session the same `goalId` and the milestone name in `milestone` when calling `loom_save_learning_state`.
+- A milestone may be marked `secured` only when its session has a successful checkpoint; the tool refuses otherwise.
+- When the learner asks to continue, call `loom_next_milestone`. It returns `review` (an earlier milestone has overdue retrieval), `continue`, `start`, or `complete`.
+- Plan one milestone at a time. Do not draft the full lesson plan for later milestones up front.
+
 ## Evidence
 
 For factual research, prefer specifications, official documentation, original papers, and maintained institutional sources. Tell the learner when sources disagree or when a claim is an inference.

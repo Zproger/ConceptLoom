@@ -17,4 +17,6 @@ Use Codex's user-input interface for selections and preferences. Knowledge check
 
 Choose evidence-appropriate checkpoints: choice for recognition, free recall for reconstruction, prediction or debugging for application, and transfer for a new context. Record confidence when useful and pass a stable `evidenceConcept`. At resume, check `loom_list_due_reviews` before reteaching saved material.
 
+Before proposing a route for a new topic, call `loom_recall_knowledge` with its prerequisite concepts. Use what it returns to skip or shorten known ground, but never skip a prerequisite blindly: verify `needs-verification` and `developing` concepts with one or two short checkpoints first. If the learner says they no longer remember something, call `loom_forget_knowledge`. When the subject is too large for one session, propose a goal with ordered milestones, wait for approval, then save it with `loom_save_goal` and pass `goalId` and `milestone` to `loom_save_learning_state`. When the learner asks to continue a long-term goal, call `loom_next_milestone` first.
+
 Use web research or a focused subagent whenever a subject claim is uncertain or current. Ask before expanding the learner's requested scope. Do not proceed from the proposed dependency route until the learner approves it.

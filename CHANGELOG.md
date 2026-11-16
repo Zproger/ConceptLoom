@@ -2,6 +2,21 @@
 
 All notable changes to Concept Loom are documented here.
 
+## Unreleased
+
+### Added
+
+- Cross-project knowledge map (`~/.concept-loom/knowledge.json`) fed by checkpoint evidence, with `loom_recall_knowledge`, `loom_forget_knowledge`, and `loom_import_knowledge`.
+- Stale-knowledge detection: concepts not verified for 90 days or reported forgotten are shown as `needs-verification`.
+- Long-term goals with ordered milestones: `loom_save_goal` and `loom_next_milestone`.
+- Optional `goalId` and `milestone` on learning sessions (session schema version 3; older sessions load unchanged).
+- `CONCEPT_LOOM_HOME` to relocate or disable (`off`) the knowledge map.
+
+### Fixed
+
+- A partial `loom_save_learning_state` no longer erases the route, secured connections, or gaps (#5).
+- Claude Code and OpenCode installers now JSON-escape the server path, fixing invalid config on Windows (#5).
+
 ## 1.1.0 — 2026-10-06
 
 ### Added

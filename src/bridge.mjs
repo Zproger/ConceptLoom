@@ -3,7 +3,9 @@ import readline from "node:readline";
 import { composeCheckpoint, assessCheckpoint } from "./checkpoints.mjs";
 import { beginNotebook, addNotebookEntry } from "./notebook.mjs";
 import { prepareMermaid, prepareTextDiagram } from "./diagrams.mjs";
-import { listDueReviews, loadLearningState, recordCheckpointAssessment, saveLearningState } from "./progress.mjs";
+import { listDueReviews, listLearningStates, loadLearningState, recordCheckpointAssessment, saveLearningState } from "./progress.mjs";
+import { forgetKnowledge, importKnowledge, recallKnowledge } from "./knowledge.mjs";
+import { linkSessionToGoal, nextMilestone, saveGoal } from "./goals.mjs";
 
 const PROTOCOL_VERSION = "2025-06-18";
 const workspace = process.cwd();
@@ -97,6 +99,8 @@ const toolCatalog = [
         phase: { enum: ["locate", "weave", "build", "transfer", "review", "complete"] },
         mode: { enum: ["guided", "practice", "review", "challenge"], default: "guided" },
         notebookPath: { type: "string" },
+        goalId: { type: "string", description: "Optional long-term goal this session belongs to (see loom_save_goal)." },
+        milestone: { type: "string", description: "Name of the goal milestone this session works on." },
         route: { type: "array", items: { type: "string" } },
         secured: { type: "array", items: { type: "string" } },
         gaps: { type: "array", items: { type: "string" } },
@@ -135,6 +139,69 @@ const toolCatalog = [
     inputSchema: {
       type: "object",
       properties: { now: { type: "string", description: "Optional ISO timestamp for deterministic clients and tests." } },
+    },
+  },
+  {
+    name: "loom_recall_knowledge",
+    description: "Look up what the learner already knows across all projects (shared knowledge map). Call before proposing a route for a new topic, passing its prerequisite concepts. Statuses: secured, developing, gap, needs-verification. Never skip a known prerequisite blindly: verify needs-verification and older concepts with a short checkpoint first. Without concepts, lists everything known.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        concepts: { type: "array", items: { type: "string" }, description: "Prerequisite concept names, for example [\"docker\", \"linux networking\"]." },
+        now: { type: "string", description: "Optional ISO timestamp for deterministic clients and tests." },
+      },
+    },
+  },
+  {
+    name: "loom_forget_knowledge",
+    description: "Remove a concept from the knowledge map, or mark it as forgotten so it is re-verified before being relied on. Use when the learner says they no longer remember something.",
+    inputSchema: {
+      type: "object",
+      required: ["concept"],
+      properties: {
+        concept: { type: "string" },
+        action: { enum: ["remove", "mark-forgotten"], default: "remove" },
+      },
+    },
+  },
+  {
+    name: "loom_import_knowledge",
+    description: "One-time import of this workspace's existing learning sessions into the shared knowledge map. Safe to repeat; run it once in each project that has past sessions.",
+    inputSchema: { type: "object", properties: {} },
+  },
+  {
+    name: "loom_save_goal",
+    description: "Create or update a long-term goal made of ordered milestones, each learned in its own focused session. A milestone can only be marked secured when its linked session has a successful checkpoint. Propose milestones to the learner and wait for approval before saving.",
+    inputSchema: {
+      type: "object",
+      required: ["goalId"],
+      properties: {
+        goalId: { type: "string", description: "Stable short id, for example go-backend." },
+        title: { type: "string" },
+        milestones: {
+          type: "array",
+          items: {
+            type: "object",
+            required: ["name"],
+            properties: {
+              name: { type: "string" },
+              status: { enum: ["todo", "in-progress", "secured"] },
+              sessionId: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+  },
+  {
+    name: "loom_next_milestone",
+    description: "Choose what to do next for a long-term goal: review an overdue secured milestone, continue the active one, or start the next. Without goalId, lists goals (and resolves automatically when there is only one). Call when the learner asks to continue.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        goalId: { type: "string" },
+        now: { type: "string", description: "Optional ISO timestamp for deterministic clients and tests." },
+      },
     },
   },
   {
@@ -177,9 +244,22 @@ async function invokeTool(name, args) {
       const path = await addNotebookEntry(workspace, args);
       return textResult({ path });
     }
-    case "loom_save_learning_state": return textResult(await saveLearningState(workspace, args));
+    case "loom_save_learning_state": {
+      const state = await saveLearningState(workspace, args);
+      try {
+        await linkSessionToGoal(workspace, state);
+      } catch (error) {
+        return textResult({ ...state, goalWarning: error instanceof Error ? error.message : String(error) });
+      }
+      return textResult(state);
+    }
     case "loom_load_learning_state": return textResult(await loadLearningState(workspace, args));
     case "loom_list_due_reviews": return textResult(await listDueReviews(workspace, args));
+    case "loom_recall_knowledge": return textResult(await recallKnowledge(args));
+    case "loom_forget_knowledge": return textResult(await forgetKnowledge(args));
+    case "loom_import_knowledge": return textResult(await importKnowledge(workspace, await listLearningStates(workspace)));
+    case "loom_save_goal": return textResult(await saveGoal(workspace, args));
+    case "loom_next_milestone": return textResult(await nextMilestone(workspace, args));
     case "loom_show_relation_map": return textResult(prepareMermaid(args));
     case "loom_show_text_diagram": return textResult(prepareTextDiagram(args));
     default: throw new Error(`unknown tool: ${name}`);

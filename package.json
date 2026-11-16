@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node src/bridge.mjs",
     "test": "node --test",
-    "check": "node --check src/bridge.mjs && node --check src/checkpoints.mjs && node --check src/notebook.mjs && node --check src/diagrams.mjs && node --check src/progress.mjs && node --check scripts/setup.mjs",
+    "check": "node --check src/bridge.mjs && node --check src/checkpoints.mjs && node --check src/notebook.mjs && node --check src/diagrams.mjs && node --check src/progress.mjs && node --check src/knowledge.mjs && node --check src/goals.mjs && node --check scripts/setup.mjs",
     "verify": "npm run check && npm test"
   },
   "engines": {
