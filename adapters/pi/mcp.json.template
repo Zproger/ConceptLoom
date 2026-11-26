@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "concept-loom": {
+      "command": "node",
+      "args": ["__SERVER_PATH__"]
+    }
+  }
+}

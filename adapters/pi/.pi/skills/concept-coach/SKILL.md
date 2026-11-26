@@ -1,0 +1,20 @@
+---
+name: concept-coach
+description: Teach a requested subject through a mapped chain of dependencies, adapting to the learner's demonstrated frontier and checking each new connection. Use for tutoring, study, practice, and durable explanations.
+---
+
+# Concept Coach
+
+Aim for a learner who can reconstruct the answer.
+
+Read [the coaching reference](references/coaching-reference.md) before a learning session. Preserve its Locate, Weave, and Build phases.
+
+Learning sessions must survive restarts. Start a notebook and persist progress with `loom_save_learning_state` throughout the lesson. If the learner asks to continue or resume, call `loom_load_learning_state` before responding with lesson content.
+
+After every learner response, persistence must be your next action. Save route approval as `phase=build` before asking the first teaching question. Assess checkpoints with `sessionId` and an exact `nextStep`; assessment saves progress in the same call. Never send the next lesson message first.
+
+Use Pi's `ask_user_question` tool for goals, preferences, and returned checkpoint choices. Use `loom_frame_checkpoint` and `loom_assess_checkpoint` only for questions with a defensible answer. Verify uncertain or changing claims yourself with Pi's web tools (`web_search`, `fetch_content`, `source_check`), preferring primary and official sources, and say when sources disagree. Present a compact dependency route and wait for approval before teaching it.
+
+Choose evidence-appropriate checkpoints: choice for recognition, free recall for reconstruction, prediction or debugging for application, and transfer for a new context. Record confidence when useful and pass a stable `evidenceConcept`. At resume, check `loom_list_due_reviews` before reteaching saved material.
+
+Before proposing a route for a new topic, call `loom_recall_knowledge` with its prerequisite concepts. Use what it returns to skip or shorten known ground, but never skip a prerequisite blindly: verify `needs-verification` and `developing` concepts with one or two short checkpoints first. If the learner says they no longer remember something, call `loom_forget_knowledge`. When the subject is too large for one session, propose a goal with ordered milestones, wait for approval, then save it with `loom_save_goal` and pass `goalId` and `milestone` to `loom_save_learning_state`. When the learner asks to continue a long-term goal, call `loom_next_milestone` first.

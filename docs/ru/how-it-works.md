@@ -2,7 +2,7 @@
 
 [Документация](README.md) · [English](../en/how-it-works.md)
 
-Concept Loom — не новая AI-модель и не отдельная учебная программа. Это методика и небольшой локальный MCP-сервер для Codex, Claude Code, OpenCode или DeepSeek Harness.
+Concept Loom — не новая AI-модель и не отдельная учебная программа. Это методика и небольшой локальный MCP-сервер для Codex, Claude Code, OpenCode, DeepSeek Harness и Pi.
 
 ## Простая модель
 
@@ -39,7 +39,7 @@ AI превращает широкую тему в наблюдаемый рез
 ## Архитектура
 
 ```text
-Codex / Claude / OpenCode / DeepSeek
+Codex / Claude / OpenCode / DeepSeek / Pi
       разговор · файлы · поиск · UI
                     │ MCP
 Concept Loom
@@ -49,7 +49,7 @@ Concept Loom
       Markdown · состояние · материалы
 ```
 
-Общая методика находится в `shared/coaching-reference.md`, а `adapters/` переводит её в формат каждого клиента. `scripts/setup.mjs` устанавливает адаптер без перезаписи существующих настроек. Адаптер DeepSeek Harness использует нативный каталог `.dsh/skills` и отдельный patch для подключения локального процесса через `@deepseek-ai/dsh-mcp-client`.
+Общая методика находится в `shared/coaching-reference.md`, а `adapters/` переводит её в формат каждого клиента. `scripts/setup.mjs` устанавливает адаптер без перезаписи существующих настроек. Адаптер DeepSeek Harness использует нативный каталог `.dsh/skills` и отдельный patch для подключения локального процесса через `@deepseek-ai/dsh-mcp-client`. Адаптер Pi использует нативный каталог `.pi/skills` и проектный `.pi/mcp.json`.
 
 `src/bridge.mjs` — локальный MCP-процесс Node.js без npm-зависимостей. Он не открывает сетевой порт.
 

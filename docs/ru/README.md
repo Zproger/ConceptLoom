@@ -2,7 +2,7 @@
 
 **Превратите вашего AI-помощника для кода в учебного тренера, который помнит, что вы уже знаете.**
 
-Работает с Codex, Claude Code, OpenCode и DeepSeek Harness · Лицензия MIT · Node.js 20+
+Работает с Codex, Claude Code, OpenCode, DeepSeek Harness и Pi · Лицензия MIT · Node.js 20+
 
 [Русский](#concept-loom) · [English](../../README.md)
 
@@ -45,6 +45,7 @@ node scripts/setup.mjs <клиент> --target ~/learning/моя-тема
 | Claude Code | `claude-code` | `claude` |
 | OpenCode | `opencode` | `opencode` |
 | DeepSeek Harness | `deepseek-harness` | `npx @deepseek-ai/dsh --profile web --patch .dsh/concept-loom.patch.yml` |
+| Pi | `pi` | `pi` |
 
 ### 2. Запустите клиент в этой папке
 
@@ -52,6 +53,8 @@ node scripts/setup.mjs <клиент> --target ~/learning/моя-тема
 cd ~/learning/моя-тема
 claude        # или команда запуска из таблицы выше
 ```
+
+При первом запуске Pi попросит довериться проекту, чтобы загрузить его `.pi/mcp.json`.
 
 ### 3. Скажите, что хотите изучить
 

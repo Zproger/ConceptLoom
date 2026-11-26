@@ -11,10 +11,10 @@ const targetFlag = args.indexOf("--target");
 const target = resolve(targetFlag >= 0 ? args[targetFlag + 1] : process.cwd());
 const skipMcp = args.includes("--skip-mcp");
 const refresh = args.includes("--refresh");
-const allowedHosts = new Set(["codex", "claude-code", "opencode", "deepseek-harness"]);
+const allowedHosts = new Set(["codex", "claude-code", "opencode", "deepseek-harness", "pi"]);
 
 if (!allowedHosts.has(host) || (targetFlag >= 0 && !args[targetFlag + 1])) {
-  process.stderr.write("Usage: node scripts/setup.mjs <codex|claude-code|opencode|deepseek-harness> [--target PATH] [--skip-mcp] [--refresh]\n");
+  process.stderr.write("Usage: node scripts/setup.mjs <codex|claude-code|opencode|deepseek-harness|pi> [--target PATH] [--skip-mcp] [--refresh]\n");
   process.exit(2);
 }
 
@@ -197,12 +197,36 @@ async function installDeepSeekHarness() {
   );
 }
 
+async function installPi() {
+  const source = join(projectRoot, "adapters", "pi");
+  const skillDestination = join(target, ".pi", "skills", "concept-coach");
+  await installSkill(join(source, ".pi", "skills", "concept-coach"), skillDestination);
+  await installReference(skillDestination);
+  if (refresh) {
+    process.stdout.write(`Refreshed Pi skill in ${skillDestination}\n`);
+    return;
+  }
+  const guidance = await installGuidance(join(source, "AGENTS.md"), "AGENTS.md", "CONCEPT_LOOM_AGENTS.md");
+  if (skipMcp) {
+    process.stdout.write("Skipped Pi MCP config generation (--skip-mcp).\n");
+  } else {
+    await materializeTemplate(join(source, "mcp.json.template"), join(target, ".pi", "mcp.json"), {
+      __SERVER_PATH__: JSON.stringify(join(projectRoot, "src", "bridge.mjs")).slice(1, -1),
+    });
+  }
+  process.stdout.write(`Installed Pi assets in ${target}\n`);
+  if (guidance !== "AGENTS.md") process.stdout.write("Merge CONCEPT_LOOM_AGENTS.md into your existing AGENTS.md.\n");
+  process.stdout.write(`\nStart Pi from the learning workspace:\n  cd ${JSON.stringify(target)}\n  pi\n`);
+  if (!skipMcp) process.stdout.write("On first start, Pi will ask you to trust the project so it loads .pi/mcp.json.\n");
+}
+
 try {
   await mkdir(target, { recursive: true });
   if (host === "codex") await installCodex();
   if (host === "claude-code") await installClaude();
   if (host === "opencode") await installOpenCode();
   if (host === "deepseek-harness") await installDeepSeekHarness();
+  if (host === "pi") await installPi();
 } catch (error) {
   process.stderr.write(`Setup stopped: ${error instanceof Error ? error.message : String(error)}\n`);
   process.exit(1);
