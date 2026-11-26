@@ -2,7 +2,7 @@
 
 [Documentation home](../../README.md) · [Русская версия](../ru/how-it-works.md)
 
-Concept Loom is not another AI model or a standalone teaching application. It is a learning workflow plus a small local MCP server connected to Codex, Claude Code, OpenCode, or DeepSeek Harness.
+Concept Loom is not another AI model or a standalone teaching application. It is a learning workflow plus a small local MCP server connected to Codex, Claude Code, OpenCode, DeepSeek Harness, or Pi.
 
 ## The simple model
 
@@ -50,10 +50,10 @@ Build can continue into an optional transfer check that changes the situation wh
 ## Architecture
 
 ```text
-┌──────────────────────────────────────┐
-│ Codex / Claude / OpenCode / DeepSeek │
-│ conversation, files, research, UI    │
-└──────────────────┬───────────────────┘
+┌───────────────────────────────────────────┐
+│ Codex / Claude / OpenCode / DeepSeek / Pi │
+│ conversation, files, research, UI         │
+└──────────────────┬────────────────────────┘
                    │ MCP calls
 ┌──────────────────▼───────────────────┐
 │ Concept Loom                         │
@@ -68,7 +68,7 @@ Build can continue into an optional transfer check that changes the situation wh
 
 ### Skills and adapters
 
-The shared method lives in `shared/coaching-reference.md`. Directories under `adapters/` translate it into each client's conventions. `scripts/setup.mjs` installs the right adapter without overwriting existing configuration. The DeepSeek Harness adapter uses its native `.dsh/skills` discovery and supplies a profile patch that connects the local MCP process through `@deepseek-ai/dsh-mcp-client`.
+The shared method lives in `shared/coaching-reference.md`. Directories under `adapters/` translate it into each client's conventions. `scripts/setup.mjs` installs the right adapter without overwriting existing configuration. The DeepSeek Harness adapter uses its native `.dsh/skills` discovery and supplies a profile patch that connects the local MCP process through `@deepseek-ai/dsh-mcp-client`. The Pi adapter uses native `.pi/skills` discovery and a project `.pi/mcp.json`.
 
 ### MCP bridge
 

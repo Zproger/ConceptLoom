@@ -11,6 +11,7 @@ All notable changes to Concept Loom are documented here.
 - Long-term goals with ordered milestones: `loom_save_goal` and `loom_next_milestone`.
 - Optional `goalId` and `milestone` on learning sessions (session schema version 3; older sessions load unchanged).
 - `CONCEPT_LOOM_HOME` to relocate or disable (`off`) the knowledge map.
+- Pi client support: `node scripts/setup.mjs pi` installs the native `.pi/skills` adapter and a project `.pi/mcp.json`.
 
 ### Fixed
 

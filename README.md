@@ -6,7 +6,7 @@
 
 **Turn your AI coding assistant into a learning coach that remembers what you know.**
 
-Works with Codex, Claude Code, OpenCode, and DeepSeek Harness · MIT licensed · Node.js 20+
+Works with Codex, Claude Code, OpenCode, DeepSeek Harness, and Pi · MIT licensed · Node.js 20+
 
 [English](#concept-loom) · [Русский](docs/ru/README.md)
 
@@ -49,6 +49,7 @@ Replace `<client>` with the tool you use:
 | Claude Code | `claude-code` | `claude` |
 | OpenCode | `opencode` | `opencode` |
 | DeepSeek Harness | `deepseek-harness` | `npx @deepseek-ai/dsh --profile web --patch .dsh/concept-loom.patch.yml` |
+| Pi | `pi` | `pi` |
 
 ### 2. Start your client in that folder
 
@@ -56,6 +57,8 @@ Replace `<client>` with the tool you use:
 cd ~/learning/my-topic
 claude        # or the start command from the table above
 ```
+
+On first start, Pi asks you to trust the project so it can load the project's `.pi/mcp.json`.
 
 ### 3. Tell it what you want to learn
 
